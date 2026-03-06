@@ -1,0 +1,567 @@
+// Prisma Schema for Omnichannel Business Inbox + CRM
+// Multi-tenant ready with organization support
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USER & AUTHENTICATION
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  name          String?
+  role          UserRole  @default(ADMIN)
+  organization  Organization? @relation(fields: [organizationId], references: [id])
+  organizationId String?
+  isActive      Boolean   @default(true)
+  lastLoginAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  conversations   Conversation[]
+  sentMessages    Message[]       @relation("SentMessages")
+
+  @@index([email])
+  @@index([organizationId])
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  AGENT
+}
+
+// ============================================
+// ORGANIZATION (Multi-tenant support)
+// ============================================
+
+model Organization {
+  id              String   @id @default(cuid())
+  name            String
+  slug            String   @unique
+  logoUrl         String?
+  businessProfile BusinessProfile?
+  
+  // Subscription
+  plan            PlanType @default(FREE)
+  subscriptionEndsAt DateTime?
+  
+  // Relations
+  users             User[]
+  contacts          Contact[]
+  conversations     Conversation[]
+  messages          Message[]
+  platforms         PlatformConnection[]
+  automations       Automation[]
+  automationLogs    AutomationLog[]
+  businessHours     BusinessHours[]
+  followUps         FollowUp[]
+  settings          Settings?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([slug])
+}
+
+enum PlanType {
+  FREE
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+// ============================================
+// BUSINESS PROFILE
+// ============================================
+
+model BusinessProfile {
+  id                String       @id @default(cuid())
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId    String       @unique
+  
+  businessName      String
+  businessEmail     String?
+  businessPhone     String?
+  businessAddress   String?
+  website           String?
+  description       String?
+  timezone          String       @default("UTC")
+  
+  // Auto-reply settings
+  defaultAutoReply  String?
+  
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+}
+
+// ============================================
+// PLATFORM CONNECTIONS (WhatsApp, Instagram, Facebook)
+// ============================================
+
+model PlatformConnection {
+  id              String       @id @default(cuid())
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId  String
+  
+  platform        PlatformType
+  status          ConnectionStatus @default(DISCONNECTED)
+  
+  // Credentials (encrypted in production)
+  accessToken     String?
+  phoneNumberId   String?  // WhatsApp
+  instagramId     String?  // Instagram
+  facebookPageId  String?  // Facebook
+  
+  webhookVerifyToken String?
+  
+  // Metadata
+  displayName     String?
+  profilePicture  String?
+  
+  // Sync settings
+  syncEnabled     Boolean     @default(true)
+  lastSyncAt      DateTime?
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  // Relations
+  conversations   Conversation[]
+  
+  @@unique([organizationId, platform])
+  @@index([organizationId])
+  @@index([platform])
+}
+
+enum PlatformType {
+  WHATSAPP
+  INSTAGRAM
+  FACEBOOK
+}
+
+enum ConnectionStatus {
+  CONNECTED
+  DISCONNECTED
+  PENDING
+  ERROR
+}
+
+// ============================================
+// CONTACTS (Mini CRM)
+// ============================================
+
+model Contact {
+  id              String       @id @default(cuid())
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId  String
+  
+  // Identity
+  platformId      String       // External ID from platform
+  platform        PlatformType
+  name            String?
+  username        String?
+  profilePicture  String?
+  
+  // CRM Fields
+  status          ContactStatus @default(NEW)
+  source          MessageSource @default(DIRECT)
+  notes           String?
+  tags            String[]
+  
+  // AI Chat Session
+  aiChatEnabled   Boolean      @default(false)  // Is AI handling this chat?
+  humanTakeover   Boolean      @default(false) // Human takeover requested
+  lastAiResponse  String?      // Last AI response given
+  
+  // Metadata
+  isBlocked       Boolean      @default(false)
+  isArchived      Boolean      @default(false)
+  lastContactedAt DateTime?
+  lastInteractionAt DateTime? // Last message interaction
+  
+  // Relations
+  conversations   Conversation[]
+  followUps       FollowUp[]
+  messages        Message[]
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  
+  @@unique([organizationId, platform, platformId])
+  @@index([organizationId])
+  @@index([platform])
+  @@index([status])
+}
+
+enum ContactStatus {
+  NEW
+  LEAD
+  QUALIFIED
+  CUSTOMER
+  CHURNED
+  BLOCKED
+  HUMAN_REQUIRED // Customer requested human support
+}
+
+enum MessageSource {
+  DIRECT
+  STORY_REPLY
+  AD
+  SEARCH
+  OTHER
+}
+
+// ============================================
+// CONVERSATIONS
+// ============================================
+
+model Conversation {
+  id              String           @id @default(cuid())
+  organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId  String
+  
+  // Participants
+  contact         Contact          @relation(fields: [contactId], references: [id])
+  contactId       String
+  assignedTo      User?           @relation(fields: [assignedToId], references: [id])
+  assignedToId    String?
+  
+  // Platform
+  platform        PlatformType
+  platformConnection PlatformConnection? @relation(fields: [platformConnectionId], references: [id])
+  platformConnectionId String?
+  
+  // Status
+  status          ConversationStatus @default(OPEN)
+  priority        Priority         @default(NORMAL)
+  
+  // Metadata
+  subject         String?
+  lastMessageAt   DateTime?
+  unreadCount     Int              @default(0)
+  
+  // Relations
+  messages        Message[]
+  
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  
+  @@index([organizationId])
+  @@index([contactId])
+  @@index([assignedToId])
+  @@index([status])
+  @@index([platform])
+}
+
+enum ConversationStatus {
+  OPEN
+  PENDING
+  RESOLVED
+  CLOSED
+}
+
+enum Priority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+// ============================================
+// MESSAGES
+// ============================================
+
+model Message {
+  id              String       @id @default(cuid())
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId  String
+  
+  // Conversation
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversationId  String
+  
+  // Contact (for easier querying)
+  contact         Contact?     @relation(fields: [contactId], references: [id])
+  contactId       String?
+  
+  // Sender
+  sender          User?        @relation("SentMessages", fields: [senderId], references: [id])
+  senderId        String?
+  
+  // Content
+  platformMessageId String?    // Original platform message ID
+  content         String
+  contentType     MessageType  @default(TEXT)
+  mediaUrl        String?
+  mediaMimeType   String?
+  
+  // Direction
+  direction       MessageDirection
+  
+  // Status
+  status          MessageStatus @default(PENDING)
+  deliveredAt     DateTime?
+  readAt          DateTime?
+  
+  // AI Fields
+  isAutomated     Boolean      @default(false)   // Was this sent by AI?
+  aiUsed          Boolean      @default(false)  // Did AI generate this response?
+  aiModel         String?      // Which AI model used
+  humanTakeoverTriggered Boolean @default(false) // Did customer request human?
+  
+  // Metadata
+  metadata        Json?
+  
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  
+  @@index([organizationId])
+  @@index([conversationId])
+  @@index([contactId])
+  @@index([senderId])
+  @@index([direction])
+  @@index([createdAt])
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  VIDEO
+  DOCUMENT
+  AUDIO
+  LOCATION
+  CONTACTS
+}
+
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum MessageStatus {
+  PENDING
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+// ============================================
+// AUTOMATION ENGINE
+// ============================================
+
+model Automation {
+  id              String       @id @default(cuid())
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId  String
+  
+  name            String
+  description     String?
+  trigger         AutomationTrigger
+  conditions      Json?        // JSON array of conditions
+  action          AutomationAction
+  
+  // Action details
+  replyContent    String?
+  delayMinutes    Int          @default(0)
+  
+  // Status
+  isActive        Boolean      @default(true)
+  priority        Int          @default(0)
+  
+  // Limits (anti-spam)
+  maxPerDay       Int?
+  maxPerContact   Int?
+  
+  // Relations
+  logs            AutomationLog[]
+  
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  
+  @@index([organizationId])
+  @@index([trigger])
+  @@index([isActive])
+}
+
+enum AutomationTrigger {
+  FIRST_MESSAGE        // First message from a new contact
+  KEYWORD_MATCH        // Message contains specific keyword
+  BUSINESS_HOURS       // Message received during business hours
+  OUTSIDE_BUSINESS_HOURS
+  NO_REPLY_AFTER       // No reply after X minutes
+  CONTACT_STATUS       // Contact status changes
+  DAILY_DIGEST         // Daily summary
+}
+
+enum AutomationAction {
+  SEND_REPLY
+  ADD_TAG
+  CHANGE_STATUS
+  ASSIGN_AGENT
+  CREATE_FOLLOWUP
+  NOTIFY_AGENT
+}
+
+model AutomationLog {
+  id              String       @id @default(cuid())
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId  String
+  
+  automation      Automation   @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  automationId   String
+  
+  contactId       String
+  conversationId  String
+  
+  trigger         AutomationTrigger
+  action          AutomationAction
+  result          Json?
+  executedAt      DateTime     @default(now())
+  
+  @@index([organizationId])
+  @@index([automationId])
+  @@index([executedAt])
+}
+
+// ============================================
+// BUSINESS HOURS
+// ============================================
+
+model BusinessHours {
+  id              String       @id @default(cuid())
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId  String
+  
+  dayOfWeek       Int          // 0 = Sunday, 6 = Saturday
+  isOpen          Boolean      @default(false)
+  openTime        String?      // "09:00"
+  closeTime       String?      // "17:00"
+  timezone        String       @default("UTC")
+  
+  // Auto-reply outside hours
+  autoReplyEnabled Boolean     @default(false)
+  autoReplyContent  String?
+  
+  @@unique([organizationId, dayOfWeek])
+  @@index([organizationId])
+}
+
+// ============================================
+// FOLLOW-UPS
+// ============================================
+
+model FollowUp {
+  id              String           @id @default(cuid())
+  organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId  String
+  
+  contact         Contact          @relation(fields: [contactId], references: [id])
+  contactId       String
+  
+  // Details
+  type            FollowUpType
+  scheduledAt     DateTime
+  message         String?
+  
+  // Status
+  status          FollowUpStatus   @default(PENDING)
+  completedAt     DateTime?
+  cancelledAt     DateTime?
+  
+  // Reminder
+  remindAgent     Boolean          @default(true)
+  reminderSentAt   DateTime?
+  
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  
+  @@index([organizationId])
+  @@index([contactId])
+  @@index([scheduledAt])
+  @@index([status])
+}
+
+enum FollowUpType {
+  MANUAL
+  SCHEDULED
+  REMINDER
+}
+
+enum FollowUpStatus {
+  PENDING
+  SENT
+  COMPLETED
+  CANCELLED
+  FAILED
+}
+
+// ============================================
+// AUDIT LOG
+// ============================================
+
+model AuditLog {
+  id              String   @id @default(cuid())
+  organizationId  String
+  
+  action          String
+  entityType      String
+  entityId        String?
+  userId          String?
+  changes         Json?
+  ipAddress       String?
+  userAgent       String?
+  
+  createdAt       DateTime @default(now())
+  
+  @@index([organizationId])
+  @@index([entityType])
+  @@index([createdAt])
+}
+
+// ============================================
+// AI SETTINGS (Organization-level AI configuration)
+// ============================================
+
+model Settings {
+  id                String   @id @default(cuid())
+  organizationId    String   @unique
+  
+  // Business Info
+  businessName       String   @default("My Business")
+  businessDescription String? // Description for AI context
+  productServiceInfo String?  // Products/services for AI
+  
+  // AI Configuration
+  aiEnabled         Boolean  @default(false)       // Is AI enabled?
+  aiModel          String   @default("gpt-4")    // Which AI model
+  aiTone           String   @default("friendly")  // friendly, formal, casual
+  autoReplyEnabled  Boolean  @default(true)        // Auto-reply to messages
+  
+  // Human Takeover
+  humanTakeoverEnabled Boolean @default(true)      // Allow human takeover
+  humanTakeoverMessage String? // Message when human takeover happens
+  
+  // OpenAI (stored encrypted in production)
+  openaiApiKey      String?  // Organization's own OpenAI key
+  
+  // Response Settings
+  responseDelay     Int      @default(1000)        // Delay before AI response (ms)
+  maxResponseLength Int      @default(500)         // Max characters in response
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([organizationId])
+}
