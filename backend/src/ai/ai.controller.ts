@@ -15,7 +15,7 @@ interface InitiateChatRequest {
   message: string;
 }
 
-@Controller('api/v1/ai')
+@Controller('ai')
 export class AiController {
   constructor(
     private aiService: AiService,
