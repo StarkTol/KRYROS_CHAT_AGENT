@@ -273,7 +273,6 @@ Your goal is to provide excellent customer service and help customers with their
           contactId,
           content: userMessage,
           direction: 'INBOUND',
-          platform,
           platformMessageId,
           status: 'DELIVERED',
         },
@@ -287,7 +286,6 @@ Your goal is to provide excellent customer service and help customers with their
           contactId,
           content: aiResponse,
           direction: 'OUTBOUND',
-          platform,
           platformMessageId: `${platformMessageId}-response`,
           status: 'SENT',
           isAutomated: true,
@@ -415,10 +413,11 @@ Your goal is to provide excellent customer service and help customers with their
   ): Promise<{ success: boolean; messageId?: string; error?: string }> {
     // Get platform credentials
     const platformConfig = await this.prisma.platformConnection.findFirst({
-      where: { 
+      where: {
         organizationId,
-        platform: platform.toUpperCase(),
-        isActive: true,
+        platform: platform.toUpperCase() as any,
+        status: 'CONNECTED' as any,
+        syncEnabled: true,
       },
     });
 
@@ -426,7 +425,12 @@ Your goal is to provide excellent customer service and help customers with their
       return { success: false, error: 'Platform not connected' };
     }
 
-    const credentials = platformConfig.credentials as Record<string, string>;
+    const credentials = {
+      accessToken: platformConfig.accessToken || '',
+      phoneNumberId: platformConfig.phoneNumberId || '',
+      instagramId: platformConfig.instagramId || '',
+      facebookPageId: platformConfig.facebookPageId || '',
+    } as Record<string, string>;
     
     try {
       let response;

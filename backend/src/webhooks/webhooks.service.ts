@@ -426,6 +426,21 @@ export class WebhooksService {
   }
 
   // ============================================
+  // WHATSAPP STATUS CALLBACK (DELIVERED/READ)
+  // ============================================
+  async handleWhatsAppStatus(payload: any): Promise<{ success: boolean }> {
+    try {
+      // WhatsApp status payloads include statuses array; we can no-op for now.
+      // Extend here to update message delivery/read status in DB if needed.
+      this.logger.log('Received WhatsApp status callback');
+      return { success: true };
+    } catch (e) {
+      this.logger.error('WhatsApp status handling error', e);
+      throw e;
+    }
+  }
+
+  // ============================================
   // LANGUAGE DETECTION
   // ============================================
 
