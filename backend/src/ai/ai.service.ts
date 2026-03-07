@@ -348,8 +348,8 @@ Your goal is to provide excellent customer service and help customers with their
 
     return {
       businessName: settings.businessName || 'KRYROS CHAT AGENT',
-      businessDescription: settings.businessDescription,
-      productServiceInfo: settings.productServiceInfo,
+      businessDescription: settings.businessDescription || undefined,
+      productServiceInfo: settings.productServiceInfo || undefined,
       tone: settings.aiTone || 'friendly',
     };
   }
@@ -387,7 +387,6 @@ Your goal is to provide excellent customer service and help customers with their
           contactId,
           content: initialMessage,
           direction: 'OUTBOUND',
-          platform,
           platformMessageId: messageResult.messageId,
           status: 'SENT',
           isAutomated: true,

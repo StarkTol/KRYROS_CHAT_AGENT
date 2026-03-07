@@ -29,7 +29,7 @@ export class AiController {
   @UseGuards(JwtAuthGuard)
   async processChat(
     @Body() body: ChatRequest,
-    @Request() req,
+    @Request() req: any,
   ) {
     const { contactId, message, platform, platformMessageId } = body;
     const organizationId = req.user.organizationId;
@@ -77,7 +77,7 @@ export class AiController {
   @UseGuards(JwtAuthGuard)
   async initiateChat(
     @Body() body: InitiateChatRequest,
-    @Request() req,
+    @Request() req: any,
   ) {
     const { contactId, message } = body;
     const organizationId = req.user.organizationId;
@@ -107,7 +107,7 @@ export class AiController {
    */
   @Get('settings')
   @UseGuards(JwtAuthGuard)
-  async getAiSettings(@Request() req) {
+  async getAiSettings(@Request() req: any) {
     const organizationId = req.user.organizationId;
 
     const settings = await this.prisma.settings.findFirst({
@@ -144,7 +144,7 @@ export class AiController {
       productServiceInfo?: string;
       autoReplyEnabled?: boolean;
     },
-    @Request() req,
+    @Request() req: any,
   ) {
     const organizationId = req.user.organizationId;
 
@@ -194,7 +194,7 @@ export class AiController {
   @UseGuards(JwtAuthGuard)
   async testAiResponse(
     @Body() body: { message: string },
-    @Request() req,
+    @Request() req: any,
   ) {
     const organizationId = req.user.organizationId;
 
