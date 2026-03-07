@@ -85,16 +85,17 @@ export class SettingsService {
       webhookVerifyToken?: string;
     },
   ) {
+    const platform = (data.platform || '').toUpperCase() as any;
     return this.prisma.platformConnection.upsert({
       where: {
         organizationId_platform: {
           organizationId,
-          platform: data.platform as any,
+          platform,
         },
       },
       create: {
         organizationId,
-        platform: data.platform as any,
+        platform,
         accessToken: data.accessToken,
         phoneNumberId: data.phoneNumberId,
         instagramId: data.instagramId,
