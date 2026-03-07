@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL as string;
+const API_URL = (process.env.NEXT_PUBLIC_API_URL as string) || 'https://kryroschatagentbackend.onrender.com/api/v1';
 
 export default function SettingsPage() {
   const [user, setUser] = useState<any>(null);
@@ -158,20 +158,11 @@ export default function SettingsPage() {
         }));
         setMessage({ type: 'success', text: 'WhatsApp connected successfully!' });
       } else {
-        // Demo mode fallback
-        setPlatforms(prev => ({
-          ...prev,
-          whatsapp: { ...prev.whatsapp, enabled: true },
-        }));
-        setMessage({ type: 'success', text: 'WhatsApp connected! (Demo mode - webhook will receive messages)' });
+        const text = await response.text().catch(() => '');
+        setMessage({ type: 'error', text: text || 'Failed to connect WhatsApp. Check Phone Number ID and Access Token.' });
       }
     } catch (error) {
-      // Demo mode - simulate connection
-      setPlatforms(prev => ({
-        ...prev,
-        whatsapp: { ...prev.whatsapp, enabled: true },
-      }));
-      setMessage({ type: 'success', text: 'WhatsApp connected! You can now receive webhook messages.' });
+      setMessage({ type: 'error', text: 'Network error while connecting WhatsApp. Please try again.' });
     } finally {
       setLoading(false);
     }
