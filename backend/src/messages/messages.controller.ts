@@ -33,4 +33,15 @@ export class MessagesController {
   ) {
     return this.messagesService.sendMessage(conversationId, content, req.user.id);
   }
+
+  @Post('send-to-contact/:contactId')
+  @ApiOperation({ summary: 'Start or continue chat with a contact' })
+  @ApiResponse({ status: 201, description: 'Message sent successfully' })
+  async sendToContact(
+    @Param('contactId') contactId: string,
+    @Body('content') content: string,
+    @Request() req: any,
+  ) {
+    return this.messagesService.sendMessageToContact(contactId, content, req.user.id, req.user.organizationId);
+  }
 }

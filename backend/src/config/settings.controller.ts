@@ -64,6 +64,7 @@ export class SettingsController {
       phoneNumberId?: string;
       instagramId?: string;
       facebookPageId?: string;
+      webhookVerifyToken?: string;
     },
   ) {
     return this.settingsService.connectPlatform(req.user.organizationId, {

@@ -25,8 +25,9 @@ export default function SettingsPage() {
       enabled: false,
       phoneNumberId: '',
       accessToken: '',
-      webhookToken: 'business_support_2024',
+      webhookVerifyToken: 'business_support_2024',
       businessAccountId: '',
+      connectionId: '',
     },
     instagram: {
       enabled: false,
@@ -66,6 +67,35 @@ export default function SettingsPage() {
         email: userData ? JSON.parse(userData).email || '' : '',
       }));
     }
+  }, []);
+
+  useEffect(() => {
+    const loadPlatformConnections = async () => {
+      try {
+        const token = localStorage.getItem('auth_token');
+        const res = await fetch(`${API_URL}/settings/platforms`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const list = Array.isArray(data) ? data : (data.data || data.connections || []);
+        const wa = list.find((p: any) => p.platform === 'WHATSAPP');
+        if (wa) {
+          setPlatforms(prev => ({
+            ...prev,
+            whatsapp: {
+              enabled: wa.status === 'CONNECTED',
+              phoneNumberId: wa.phoneNumberId || '',
+              accessToken: wa.accessToken || '',
+              webhookVerifyToken: wa.webhookVerifyToken || prev.whatsapp.webhookVerifyToken,
+              businessAccountId: wa.businessAccountId || '',
+              connectionId: wa.id || '',
+            },
+          }));
+        }
+      } catch {}
+    };
+    loadPlatformConnections();
   }, []);
 
   const handleSaveProfile = async () => {
@@ -109,11 +139,23 @@ export default function SettingsPage() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          ...platforms.whatsapp,
+          phoneNumberId: platforms.whatsapp.phoneNumberId,
+          accessToken: platforms.whatsapp.accessToken,
+          webhookVerifyToken: platforms.whatsapp.webhookVerifyToken,
         }),
       });
       
       if (response.ok) {
+        const data = await response.json();
+        const conn = data.data || data;
+        setPlatforms(prev => ({
+          ...prev,
+          whatsapp: {
+            ...prev.whatsapp,
+            enabled: true,
+            connectionId: conn.id || prev.whatsapp.connectionId,
+          },
+        }));
         setMessage({ type: 'success', text: 'WhatsApp connected successfully!' });
       } else {
         // Demo mode fallback
@@ -355,10 +397,10 @@ export default function SettingsPage() {
                   <strong>✓ WhatsApp is connected!</strong> Your webhook endpoint is ready to receive messages.
                 </p>
                 <p style={{ margin: '8px 0 0 0', fontSize: '13px', color: '#0c4a6e' }}>
-                  <strong>Webhook URL:</strong> https://your-domain.com/api/webhooks/meta
+                  <strong>Webhook URL:</strong> {`${(process.env.NEXT_PUBLIC_API_URL || '').replace('/api/v1','')}/api/v1/webhooks/whatsapp/${platforms.whatsapp.connectionId || '{connectionId}'}`}
                 </p>
                 <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#0c4a6e' }}>
-                  <strong>Verify Token:</strong> {platforms.whatsapp.webhookToken}
+                  <strong>Verify Token:</strong> {platforms.whatsapp.webhookVerifyToken}
                 </p>
               </div>
             ) : (

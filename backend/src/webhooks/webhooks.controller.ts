@@ -21,6 +21,20 @@ export class WebhooksController {
     return this.webhooksService.handleWhatsAppVerification({ hub: { mode, verify_token: token, challenge } });
   }
 
+  @Get('whatsapp/:connectionId')
+  @ApiExcludeEndpoint()
+  async verifyWhatsAppForConnection(
+    @Param('connectionId') connectionId: string,
+    @Query('hub.mode') mode: string,
+    @Query('hub.verify_token') token: string,
+    @Query('hub.challenge') challenge: string,
+  ) {
+    return this.webhooksService.handleWhatsAppVerification(
+      { hub: { mode, verify_token: token, challenge } },
+      connectionId,
+    );
+  }
+
   @Post('whatsapp/:connectionId')
   @ApiExcludeEndpoint()
   async handleWhatsApp(

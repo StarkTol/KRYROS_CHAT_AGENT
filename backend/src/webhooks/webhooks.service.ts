@@ -129,17 +129,24 @@ export class WebhooksService {
     );
   }
 
-  async handleWhatsAppVerification(payload: any): Promise<{ status: string }> {
-    const verifyToken = process.env.WHATSAPP_VERIFY_TOKEN;
+  async handleWhatsAppVerification(payload: any, connectionId?: string): Promise<any> {
     const mode = payload?.hub?.mode;
     const token = payload?.hub?.verify_token;
     const challenge = payload?.hub?.challenge;
 
-    if (mode === 'subscribe' && token === verifyToken) {
-      return { status: 'VERIFIED' };
-    } else {
-      throw new BadRequestException('Verification failed');
+    let validToken = process.env.META_VERIFY_TOKEN || process.env.WHATSAPP_VERIFY_TOKEN;
+
+    if (connectionId) {
+      try {
+        const conn = await this.prisma.platformConnection.findUnique({ where: { id: connectionId } });
+        if (conn?.webhookVerifyToken) validToken = conn.webhookVerifyToken;
+      } catch {}
     }
+
+    if (mode === 'subscribe' && token && validToken && token === validToken && challenge) {
+      return challenge;
+    }
+    throw new BadRequestException('Verification failed');
   }
 
   // ============================================

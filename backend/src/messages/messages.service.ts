@@ -202,7 +202,6 @@ export class MessagesService {
       throw new NotFoundException('Conversation not found');
     }
 
-    // Create outgoing message
     const message = await this.prisma.message.create({
       data: {
         organizationId: conversation.organizationId,
@@ -214,16 +213,98 @@ export class MessagesService {
       },
     });
 
+    try {
+      const platformConn =
+        conversation.platformConnection ||
+        (await this.prisma.platformConnection.findFirst({
+          where: {
+            organizationId: conversation.organizationId,
+            platform: conversation.platform,
+            status: 'CONNECTED',
+            syncEnabled: true,
+          } as any,
+        }));
+
+      if (platformConn) {
+        if (conversation.platform === PlatformType.WHATSAPP && platformConn.phoneNumberId && platformConn.accessToken) {
+          const res = await fetch(
+            `https://graph.facebook.com/v18.0/${platformConn.phoneNumberId}/messages`,
+            {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${platformConn.accessToken}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                messaging_product: 'whatsapp',
+                to: conversation.contact.platformId,
+                type: 'text',
+                text: { body: content },
+              }),
+            }
+          );
+          const data = await res.json().catch(() => ({}));
+          const platformMessageId = data?.messages?.[0]?.id;
+          if (platformMessageId) {
+            await this.prisma.message.update({
+              where: { id: message.id },
+              data: { platformMessageId },
+            });
+          }
+        }
+      }
+    } catch {}
+
     // Update conversation
     await this.prisma.conversation.update({
       where: { id: conversationId },
       data: {
         lastMessageAt: new Date(),
-        status: 'CLOSED',
+        status: 'OPEN',
       },
     });
 
     return message;
+  }
+
+  async sendMessageToContact(
+    contactId: string,
+    content: string,
+    senderId: string,
+    organizationId: string,
+  ) {
+    const contact = await this.prisma.contact.findFirst({
+      where: { id: contactId, organizationId },
+    });
+    if (!contact) {
+      throw new NotFoundException('Contact not found');
+    }
+
+    let conversation = await this.prisma.conversation.findFirst({
+      where: { organizationId, contactId, platform: contact.platform },
+      include: { platformConnection: true, contact: true },
+    });
+
+    if (!conversation) {
+      const platformConnection = await this.prisma.platformConnection.findFirst({
+        where: { organizationId, platform: contact.platform },
+      });
+      conversation = await this.prisma.conversation.create({
+        data: {
+          organizationId,
+          platform: contact.platform,
+          contactId,
+          platformConnectionId: platformConnection?.id,
+          status: 'OPEN',
+          priority: 'NORMAL',
+          lastMessageAt: new Date(),
+        },
+        include: { platformConnection: true, contact: true },
+      });
+    }
+
+    const msg = await this.sendMessage(conversation.id, content, senderId);
+    return { message: msg, conversationId: conversation.id };
   }
 
   // ============================================

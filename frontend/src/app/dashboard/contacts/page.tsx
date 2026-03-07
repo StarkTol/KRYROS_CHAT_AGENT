@@ -19,6 +19,10 @@ export default function ContactsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [msgModalOpen, setMsgModalOpen] = useState(false);
+  const [msgContact, setMsgContact] = useState<Contact | null>(null);
+  const [msgText, setMsgText] = useState('');
+  const [sending, setSending] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     platform: 'WHATSAPP',
@@ -210,6 +214,7 @@ export default function ContactsPage() {
                 <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: '600', color: '#6b7280', fontSize: '13px' }}>Status</th>
                 <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: '600', color: '#6b7280', fontSize: '13px' }}>Source</th>
                 <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: '600', color: '#6b7280', fontSize: '13px' }}>Added</th>
+                <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: '600', color: '#6b7280', fontSize: '13px' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -270,6 +275,21 @@ export default function ContactsPage() {
                   <td style={{ padding: '12px 16px', color: '#6b7280', fontSize: '14px' }}>{contact.source}</td>
                   <td style={{ padding: '12px 16px', color: '#6b7280', fontSize: '14px' }}>
                     {new Date(contact.createdAt).toLocaleDateString()}
+                  </td>
+                  <td style={{ padding: '12px 16px' }}>
+                    <button
+                      onClick={() => { setMsgContact(contact); setMsgText(''); setMsgModalOpen(true); }}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        border: '1px solid #d1d5db',
+                        background: 'white',
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                      }}
+                    >
+                      Message
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -393,6 +413,74 @@ export default function ContactsPage() {
                 }}
               >
                 Create Contact
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {msgModalOpen && msgContact && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 100,
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '12px',
+            padding: '24px',
+            width: '100%',
+            maxWidth: '450px',
+          }}>
+            <h2 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px' }}>
+              Message {msgContact.name || msgContact.platformId}
+            </h2>
+            <p style={{ margin: '0 0 12px 0', color: '#6b7280' }}>
+              Platform: {msgContact.platform} • ID: {msgContact.platformId}
+            </p>
+            <textarea
+              placeholder="Type your message..."
+              value={msgText}
+              onChange={(e) => setMsgText(e.target.value)}
+              style={{ width: '100%', minHeight: '120px', border: '1px solid #d1d5db', borderRadius: '8px', padding: '10px' }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '12px' }}>
+              <button
+                onClick={() => { setMsgModalOpen(false); setMsgContact(null); }}
+                style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #d1d5db', background: 'white', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!msgText.trim()) return;
+                  setSending(true);
+                  try {
+                    const token = localStorage.getItem('auth_token');
+                    await fetch(`${API_URL}/messages/send-to-contact/${msgContact.id}`, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`,
+                      },
+                      body: JSON.stringify({ content: msgText }),
+                    });
+                    setMsgModalOpen(false);
+                    setMsgContact(null);
+                    setMsgText('');
+                  } catch (e) {
+                  } finally {
+                    setSending(false);
+                  }
+                }}
+                disabled={sending}
+                style={{ padding: '8px 12px', borderRadius: '6px', border: 'none', background: '#3b82f6', color: 'white', cursor: 'pointer' }}
+              >
+                {sending ? 'Sending...' : 'Send Message'}
               </button>
             </div>
           </div>
