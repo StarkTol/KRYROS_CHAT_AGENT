@@ -6,7 +6,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL as string;
 
 export default function SettingsPage() {
   const [user, setUser] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'business' | 'platforms' | 'hours' | 'billing'>('business');
+  const [activeTab, setActiveTab] = useState<'business' | 'platforms' | 'hours'>('business');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -144,7 +144,6 @@ export default function SettingsPage() {
           { id: 'business', label: '🏢 Business Profile' },
           { id: 'platforms', label: '🔗 Platforms' },
           { id: 'hours', label: '⏰ Business Hours' },
-          { id: 'billing', label: '💳 Billing' },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -621,87 +620,7 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* Billing Tab */}
-      {activeTab === 'billing' && (
-        <div style={{ 
-          background: 'white', 
-          borderRadius: '12px', 
-          padding: '24px',
-          border: '1px solid #e5e7eb',
-        }}>
-          <h2 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '24px' }}>Subscription Plan</h2>
-          
-          <div style={{ 
-            padding: '20px', 
-            background: '#f0f9ff', 
-            borderRadius: '12px',
-            border: '1px solid #bae6fd',
-            marginBottom: '24px',
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <p style={{ margin: 0, fontSize: '14px', color: '#0369a1' }}>Current Plan</p>
-                <h3 style={{ margin: '8px 0 0 0', fontSize: '24px', fontWeight: 'bold', color: '#0c4a6e' }}>Free</h3>
-              </div>
-              <button
-                style={{
-                  padding: '10px 20px',
-                  background: '#3b82f6',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontWeight: '500',
-                }}
-              >
-                Upgrade Plan
-              </button>
-            </div>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
-            {[
-              { name: 'Starter', price: '$29/mo', features: ['1 Agent', '1 Platform', '500 Contacts'] },
-              { name: 'Professional', price: '$99/mo', features: ['5 Agents', 'All Platforms', '5,000 Contacts'] },
-              { name: 'Enterprise', price: '$299/mo', features: ['Unlimited', 'Priority Support', 'White-label'] },
-            ].map((plan) => (
-              <div 
-                key={plan.name}
-                style={{ 
-                  padding: '20px', 
-                  border: '1px solid #e5e7eb', 
-                  borderRadius: '12px',
-                  textAlign: 'center',
-                }}
-              >
-                <h3 style={{ fontWeight: '600', margin: '0 0 8px 0' }}>{plan.name}</h3>
-                <p style={{ fontSize: '24px', fontWeight: 'bold', margin: '0 0 16px 0' }}>{plan.price}</p>
-                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 20px 0' }}>
-                  {plan.features.map((feature) => (
-                    <li key={feature} style={{ padding: '4px 0', fontSize: '13px', color: '#6b7280' }}>
-                      ✓ {feature}
-                    </li>
-                  ))}
-                </ul>
-                <button
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    background: '#3b82f6',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontWeight: '500',
-                  }}
-                >
-                  Select Plan
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Billing removed for personal/free use */}
     </div>
   );
 }

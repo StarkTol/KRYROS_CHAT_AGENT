@@ -234,11 +234,7 @@ https://abc123.ngrok.io/api/webhooks/meta
 | PUT | `/api/v1/settings/business-hours` | Update business hours |
 
 ### Admin
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/v1/admin/organizations` | List all organizations |
-| PATCH | `/api/v1/admin/organizations/:id/plan` | Update subscription plan |
-| DELETE | `/api/v1/admin/organizations/:id` | Delete organization |
+Removed for personal edition (no multi-tenant admin panel)
 
 ---
 
@@ -342,7 +338,7 @@ business_support/
 │   │   ├── platforms/       # Platform integrations
 │   │   ├── webhooks/        # Meta webhooks
 │   │   ├── config/          # Settings
-│   │   └── admin/           # Super admin
+│   │   └── admin/           # Super admin (removed in personal edition)
 │   ├── prisma/schema.prisma
 │   └── package.json
 ├── frontend/
@@ -360,14 +356,8 @@ business_support/
 
 ---
 
-## 💰 Pricing Plans
-
-| Plan | Price | Features |
-|------|-------|----------|
-| Free | $0 | Testing, 1 user |
-| Starter | $29/mo | 1 agent, 1 platform |
-| Professional | $99/mo | 5 agents, all platforms |
-| Enterprise | $299/mo | Unlimited, priority support |
+## License/Usage
+Personal edition: all features enabled for single organization use. No billing, no subscription plans.
 
 ---
 
