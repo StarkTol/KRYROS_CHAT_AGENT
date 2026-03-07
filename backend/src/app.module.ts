@@ -12,7 +12,6 @@ import { AutomationModule } from './automation/automation.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { SettingsModule } from './config/settings.module';
 import { PlatformsModule } from './platforms/platforms.module';
-import { AdminModule } from './admin/admin.module';
 import { AiModule } from './ai/ai.module';
 
 @Module({
@@ -38,7 +37,6 @@ import { AiModule } from './ai/ai.module';
     WebhooksModule,
     SettingsModule,
     PlatformsModule,
-    AdminModule,
     AiModule,
   ],
 })

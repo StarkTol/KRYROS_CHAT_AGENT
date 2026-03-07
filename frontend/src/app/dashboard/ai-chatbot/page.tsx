@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL as string;
+
 interface AiSettings {
   aiEnabled: boolean;
   aiModel: string;
@@ -39,7 +41,7 @@ export default function AiChatbotPage() {
     setLoading(true);
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch('http://localhost:5013/api/v1/ai/settings', {
+      const response = await fetch(`${API_URL}/ai/settings`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await response.json();
@@ -57,7 +59,7 @@ export default function AiChatbotPage() {
     setSaving(true);
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch('http://localhost:5013/api/v1/ai/settings', {
+      const response = await fetch(`${API_URL}/ai/settings`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -85,7 +87,7 @@ export default function AiChatbotPage() {
     setTestResponse('');
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch('http://localhost:5013/api/v1/ai/test', {
+      const response = await fetch(`${API_URL}/ai/test`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

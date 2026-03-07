@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL as string;
+
 export default function SettingsPage() {
   const [user, setUser] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'business' | 'platforms' | 'hours' | 'billing'>('business');
@@ -83,14 +85,13 @@ export default function SettingsPage() {
     setLoading(true);
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch('http://localhost:5013/api/v1/settings/platforms', {
-        method: 'PUT',
+      const response = await fetch(`${API_URL}/settings/platforms/whatsapp/connect`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          platform: 'WHATSAPP',
           ...platforms.whatsapp,
         }),
       });
