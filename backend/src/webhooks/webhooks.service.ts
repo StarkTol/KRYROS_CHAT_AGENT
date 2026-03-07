@@ -60,8 +60,8 @@ export class WebhooksService {
         // Get business context
         const businessContext = {
           businessName: settings.businessName || 'KRYROS CHAT AGENT',
-          businessDescription: settings.businessDescription,
-          productServiceInfo: settings.productServiceInfo,
+          businessDescription: settings.businessDescription || undefined,
+          productServiceInfo: settings.productServiceInfo || undefined,
           tone: settings.aiTone || 'friendly',
         };
 
@@ -84,11 +84,11 @@ export class WebhooksService {
           normalized.platformMessageId,
           normalized.content,
           aiResult.response,
-          aiResult.shouldHumanTakeoverTriggered,
+          aiResult.shouldHumanTakeover,
         );
 
         // If human takeover was triggered, update contact status
-        if (aiResult.shouldHumanTakeoverTriggered) {
+        if (aiResult.shouldHumanTakeover) {
           await this.prisma.contact.update({
             where: { id: result.contact.id },
             data: {
@@ -183,8 +183,8 @@ export class WebhooksService {
         const history = await this.aiService.getConversationHistory(result.contact.id, 10);
         const businessContext = {
           businessName: settings.businessName || 'Our Business',
-          businessDescription: settings.businessDescription,
-          productServiceInfo: settings.productServiceInfo,
+          businessDescription: settings.businessDescription || undefined,
+          productServiceInfo: settings.productServiceInfo || undefined,
           tone: settings.aiTone || 'friendly',
         };
         const language = this.detectLanguage(normalized.content);
@@ -203,10 +203,10 @@ export class WebhooksService {
           normalized.platformMessageId,
           normalized.content,
           aiResult.response,
-          aiResult.shouldHumanTakeoverTriggered,
+          aiResult.shouldHumanTakeover,
         );
 
-        if (!aiResult.shouldHumanTakeoverTriggered) {
+        if (!aiResult.shouldHumanTakeover) {
           await this.sendAiResponse(
             connection.organizationId,
             result.contact.platformId,
@@ -280,8 +280,8 @@ export class WebhooksService {
         const history = await this.aiService.getConversationHistory(result.contact.id, 10);
         const businessContext = {
           businessName: settings.businessName || 'Our Business',
-          businessDescription: settings.businessDescription,
-          productServiceInfo: settings.productServiceInfo,
+          businessDescription: settings.businessDescription || undefined,
+          productServiceInfo: settings.productServiceInfo || undefined,
           tone: settings.aiTone || 'friendly',
         };
         const language = this.detectLanguage(normalized.content);
@@ -300,10 +300,10 @@ export class WebhooksService {
           normalized.platformMessageId,
           normalized.content,
           aiResult.response,
-          aiResult.shouldHumanTakeoverTriggered,
+          aiResult.shouldHumanTakeover,
         );
 
-        if (!aiResult.shouldHumanTakeoverTriggered) {
+        if (!aiResult.shouldHumanTakeover) {
           await this.sendAiResponse(
             connection.organizationId,
             result.contact.platformId,
@@ -351,7 +351,8 @@ export class WebhooksService {
       where: {
         organizationId,
         platform: platform.toUpperCase() as any,
-        isActive: true,
+        status: 'CONNECTED' as any,
+        syncEnabled: true,
       },
     });
 
@@ -360,7 +361,12 @@ export class WebhooksService {
       return;
     }
 
-    const credentials = platformConfig.credentials as Record<string, string>;
+    const credentials = {
+      accessToken: platformConfig.accessToken || '',
+      phoneNumberId: platformConfig.phoneNumberId || '',
+      instagramId: platformConfig.instagramId || '',
+      facebookPageId: platformConfig.facebookPageId || '',
+    } as Record<string, string>;
 
     try {
       if (platform.toUpperCase() === 'WHATSAPP') {
