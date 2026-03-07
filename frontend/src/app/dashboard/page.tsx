@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL as string;
+
 interface DashboardStats {
   totalMessages: number;
   unreadMessages: number;
@@ -32,18 +34,32 @@ export default function DashboardPage() {
       setOrganization(JSON.parse(orgData));
     }
 
-    // Simulate loading stats
-    const timer = setTimeout(() => {
-      setStats({
-        totalMessages: 0,
-        unreadMessages: 0,
-        totalContacts: 0,
-        activeAutomations: 0,
-      });
-      setLoading(false);
-    }, 500);
-    
-    return () => clearTimeout(timer);
+    const loadStats = async () => {
+      setLoading(true);
+      try {
+        const token = localStorage.getItem('auth_token');
+        const [dashboardRes, convStatsRes, automationsRes] = await Promise.all([
+          fetch(`${API_URL}/settings/dashboard`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${API_URL}/conversations/stats`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${API_URL}/automation`, { headers: { Authorization: `Bearer ${token}` } }),
+        ]);
+        const dashboard = await dashboardRes.json();
+        const convStats = await convStatsRes.json();
+        const automations = await automationsRes.json();
+        const activeCount = (automations.data || automations || []).filter((a: any) => a.isActive).length;
+        setStats({
+          totalMessages: dashboard.messagesToday || 0,
+          unreadMessages: convStats.unreadTotal || 0,
+          totalContacts: dashboard.totalContacts || 0,
+          activeAutomations: activeCount,
+        });
+      } catch (e) {
+        console.error('Failed to load dashboard stats', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadStats();
   }, []);
 
   const userName = user?.name || 'User';

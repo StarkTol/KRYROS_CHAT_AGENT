@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL as string;
+
 interface Contact {
   id: string;
   name: string;
@@ -33,31 +35,70 @@ export default function ContactsPage() {
     if (userData) {
       setUser(JSON.parse(userData));
     }
-    // Demo contacts
-    setContacts([
-      { id: '1', name: 'John Doe', platform: 'WHATSAPP', platformId: '123456789', status: 'NEW', source: 'DIRECT', createdAt: new Date().toISOString() },
-      { id: '2', name: 'Jane Smith', platform: 'INSTAGRAM', platformId: '987654321', status: 'LEAD', source: 'STORY_REPLY', createdAt: new Date().toISOString() },
-      { id: '3', name: 'Bob Wilson', platform: 'FACEBOOK', platformId: '456789123', status: 'CUSTOMER', source: 'AD', createdAt: new Date().toISOString() },
-    ]);
-    setLoading(false);
+    const loadContacts = async () => {
+      setLoading(true);
+      try {
+        const token = localStorage.getItem('auth_token');
+        const res = await fetch(`${API_URL}/contacts`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        const list = (data.contacts || data.data || []).map((c: any) => ({
+          id: c.id,
+          name: c.name || c.platformId,
+          platform: c.platform,
+          platformId: c.platformId,
+          status: c.status,
+          source: c.source,
+          createdAt: c.createdAt,
+        }));
+        setContacts(list);
+      } catch (e) {
+        console.error('Failed to load contacts', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadContacts();
   }, []);
 
-  const handleCreateContact = () => {
-    const newContact: Contact = {
-      id: Date.now().toString(),
-      ...formData,
-      createdAt: new Date().toISOString(),
-    };
-    setContacts([...contacts, newContact]);
-    setShowModal(false);
-    setFormData({
-      name: '',
-      platform: 'WHATSAPP',
-      platformId: '',
-      status: 'NEW',
-      source: 'DIRECT',
-      notes: '',
-    });
+  const handleCreateContact = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const res = await fetch(`${API_URL}/contacts`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        const c = data.data || data;
+        const newContact: Contact = {
+          id: c.id,
+          name: c.name || c.platformId,
+          platform: c.platform,
+          platformId: c.platformId,
+          status: c.status,
+          source: c.source,
+          createdAt: c.createdAt,
+        };
+        setContacts([newContact, ...contacts]);
+        setShowModal(false);
+        setFormData({
+          name: '',
+          platform: 'WHATSAPP',
+          platformId: '',
+          status: 'NEW',
+          source: 'DIRECT',
+          notes: '',
+        });
+      }
+    } catch (e) {
+      console.error('Failed to create contact', e);
+    }
   };
 
   const filteredContacts = contacts.filter(c => 

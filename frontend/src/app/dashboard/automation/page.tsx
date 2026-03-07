@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL as string;
+
 interface Automation {
   id: string;
   name: string;
@@ -45,80 +47,130 @@ export default function AutomationPage() {
   });
 
   useEffect(() => {
-    // Demo automations
-    setAutomations([
-      {
-        id: '1',
-        name: 'Welcome Message',
-        type: 'AUTO_REPLY',
-        trigger: 'FIRST_MESSAGE',
-        conditions: 'All platforms',
-        action: 'Send welcome message',
-        status: 'ACTIVE',
-        stats: { triggered: 45, success: 43 },
-        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        id: '2',
-        name: 'Pricing Response',
-        type: 'KEYWORD',
-        trigger: 'keyword:price',
-        conditions: 'Contains "price" or "cost"',
-        action: 'Send pricing info',
-        status: 'ACTIVE',
-        stats: { triggered: 23, success: 22 },
-        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        id: '3',
-        name: 'Support Hours',
-        type: 'BUSINESS_HOURS',
-        trigger: 'OUTSIDE_HOURS',
-        conditions: 'Mon-Fri 9AM-6PM',
-        action: 'Send off-hours message',
-        status: 'ACTIVE',
-        stats: { triggered: 12, success: 12 },
-        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-    ]);
-    setLoading(false);
+    const loadAutomations = async () => {
+      setLoading(true);
+      try {
+        const token = localStorage.getItem('auth_token');
+        const res = await fetch(`${API_URL}/automation`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        const list = (data.data || data || []).map((a: any) => ({
+          id: a.id,
+          name: a.name,
+          type: a.action || 'AUTO_REPLY',
+          trigger: a.trigger,
+          conditions: Array.isArray(a.conditions) ? a.conditions.map((c: any) => c.type).join(', ') : '',
+          action: a.replyContent || a.description || '',
+          status: a.isActive ? 'ACTIVE' : 'PAUSED',
+          stats: { triggered: a.triggeredCount || 0, success: a.successCount || 0 },
+          createdAt: a.createdAt,
+        }));
+        setAutomations(list);
+      } catch (e) {
+        console.error('Failed to load automations', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadAutomations();
   }, []);
 
-  const handleCreateAutomation = () => {
-    const newAutomation: Automation = {
-      id: Date.now().toString(),
-      name: formData.name,
-      type: formData.type,
-      trigger: formData.trigger + (formData.keyword ? `:${formData.keyword}` : ''),
-      conditions: 'All platforms',
-      action: formData.message.substring(0, 50) + (formData.message.length > 50 ? '...' : ''),
-      status: formData.isActive ? 'ACTIVE' : 'DRAFT',
-      stats: { triggered: 0, success: 0 },
-      createdAt: new Date().toISOString(),
-    };
-    setAutomations([...automations, newAutomation]);
-    setShowModal(false);
-    setFormData({
-      name: '',
-      type: 'AUTO_REPLY',
-      trigger: 'FIRST_MESSAGE',
-      keyword: '',
-      message: '',
-      isActive: true,
-    });
+  const handleCreateAutomation = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const res = await fetch(`${API_URL}/automation`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          trigger: formData.trigger,
+          action: 'SEND_REPLY',
+          replyContent: formData.message,
+          isActive: formData.isActive,
+        }),
+      });
+      if (res.ok) {
+        setShowModal(false);
+        setFormData({
+          name: '',
+          type: 'AUTO_REPLY',
+          trigger: 'FIRST_MESSAGE',
+          keyword: '',
+          message: '',
+          isActive: true,
+        });
+        const token2 = localStorage.getItem('auth_token');
+        const refreshed = await fetch(`${API_URL}/automation`, {
+          headers: { Authorization: `Bearer ${token2}` },
+        });
+        const data = await refreshed.json();
+        const list = (data.data || data || []).map((a: any) => ({
+          id: a.id,
+          name: a.name,
+          type: a.action || 'AUTO_REPLY',
+          trigger: a.trigger,
+          conditions: Array.isArray(a.conditions) ? a.conditions.map((c: any) => c.type).join(', ') : '',
+          action: a.replyContent || a.description || '',
+          status: a.isActive ? 'ACTIVE' : 'PAUSED',
+          stats: { triggered: a.triggeredCount || 0, success: a.successCount || 0 },
+          createdAt: a.createdAt,
+        }));
+        setAutomations(list);
+      }
+    } catch (e) {
+      console.error('Failed to create automation', e);
+    }
   };
 
-  const toggleAutomation = (id: string) => {
-    setAutomations(automations.map(a => 
-      a.id === id 
-        ? { ...a, status: a.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE' }
-        : a
-    ));
+  const toggleAutomation = async (id: string) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const res = await fetch(`${API_URL}/automation/${id}/toggle`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const token2 = localStorage.getItem('auth_token');
+        const refreshed = await fetch(`${API_URL}/automation`, {
+          headers: { Authorization: `Bearer ${token2}` },
+        });
+        const data = await refreshed.json();
+        const list = (data.data || data || []).map((a: any) => ({
+          id: a.id,
+          name: a.name,
+          type: a.action || 'AUTO_REPLY',
+          trigger: a.trigger,
+          conditions: Array.isArray(a.conditions) ? a.conditions.map((c: any) => c.type).join(', ') : '',
+          action: a.replyContent || a.description || '',
+          status: a.isActive ? 'ACTIVE' : 'PAUSED',
+          stats: { triggered: a.triggeredCount || 0, success: a.successCount || 0 },
+          createdAt: a.createdAt,
+        }));
+        setAutomations(list);
+      }
+    } catch (e) {
+      console.error('Failed to toggle automation', e);
+    }
   };
 
-  const deleteAutomation = (id: string) => {
+  const deleteAutomation = async (id: string) => {
     if (!confirm('Delete this automation?')) return;
-    setAutomations(automations.filter(a => a.id !== id));
+    try {
+      const token = localStorage.getItem('auth_token');
+      const res = await fetch(`${API_URL}/automation/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        setAutomations(automations.filter(a => a.id !== id));
+      }
+    } catch (e) {
+      console.error('Failed to delete automation', e);
+    }
   };
 
   const typeIcons: Record<string, string> = {

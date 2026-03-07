@@ -71,9 +71,26 @@ export default function SettingsPage() {
   const handleSaveProfile = async () => {
     setLoading(true);
     try {
-      // In production, this would call the API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setMessage({ type: 'success', text: 'Business profile saved successfully!' });
+      const token = localStorage.getItem('auth_token');
+      const res = await fetch(`${API_URL}/settings/business`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          businessName: businessProfile.name,
+          businessEmail: businessProfile.email || null,
+          businessPhone: businessProfile.phone || null,
+          businessAddress: businessProfile.address || null,
+          timezone: businessProfile.timezone,
+        }),
+      });
+      if (res.ok) {
+        setMessage({ type: 'success', text: 'Business profile saved successfully!' });
+      } else {
+        setMessage({ type: 'error', text: 'Failed to save profile' });
+      }
     } catch (error) {
       setMessage({ type: 'error', text: 'Failed to save profile' });
     } finally {
@@ -121,8 +138,38 @@ export default function SettingsPage() {
   const handleSaveHours = async () => {
     setLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setMessage({ type: 'success', text: 'Business hours saved successfully!' });
+      const dayMap: Record<string, number> = {
+        Sunday: 0,
+        Monday: 1,
+        Tuesday: 2,
+        Wednesday: 3,
+        Thursday: 4,
+        Friday: 5,
+        Saturday: 6,
+      };
+      const token = localStorage.getItem('auth_token');
+      const payload = businessHours.schedule.map(d => ({
+        dayOfWeek: dayMap[d.day],
+        isOpen: d.enabled,
+        openTime: d.start,
+        closeTime: d.end,
+        timezone: businessHours.timezone,
+        autoReplyEnabled: !d.enabled,
+        autoReplyContent: businessHours.offHoursMessage,
+      }));
+      const res = await fetch(`${API_URL}/settings/business-hours`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        setMessage({ type: 'success', text: 'Business hours saved successfully!' });
+      } else {
+        setMessage({ type: 'error', text: 'Failed to save hours' });
+      }
     } catch (error) {
       setMessage({ type: 'error', text: 'Failed to save hours' });
     } finally {

@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from 'react';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL as string;
+
 interface Message {
   id: string;
-  contactName: string;
-  contactPlatform: string;
-  platformId: string;
+  contactName?: string;
+  contactPlatform?: string;
+  platformId?: string;
   content: string;
   direction: 'inbound' | 'outbound';
   timestamp: string;
@@ -18,7 +20,7 @@ interface Conversation {
   contactName: string;
   platform: string;
   platformId: string;
-  lastMessage: string;
+  lastMessage?: string;
   timestamp: string;
   unread: number;
   messages: Message[];
@@ -33,133 +35,31 @@ export default function InboxPage() {
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    // Demo conversations
-    setConversations([
-      {
-        id: '1',
-        contactName: 'John Doe',
-        platform: 'WHATSAPP',
-        platformId: '+234 806 123 4567',
-        lastMessage: 'What are your business hours?',
-        timestamp: new Date(Date.now() - 30 * 60000).toISOString(),
-        unread: 2,
-        messages: [
-          {
-            id: '1-1',
-            contactName: 'John Doe',
-            contactPlatform: 'WHATSAPP',
-            platformId: '+234 806 123 4567',
-            content: 'Hi! I saw your ad and I\'m interested in your services.',
-            direction: 'inbound',
-            timestamp: new Date(Date.now() - 60 * 60000).toISOString(),
-            read: true,
-          },
-          {
-            id: '1-2',
-            contactName: 'You',
-            contactPlatform: 'WHATSAPP',
-            platformId: '+234 806 123 4567',
-            content: 'Hello John! Thanks for reaching out. How can I help you?',
-            direction: 'outbound',
-            timestamp: new Date(Date.now() - 50 * 60000).toISOString(),
-            read: true,
-          },
-          {
-            id: '1-3',
-            contactName: 'John Doe',
-            contactPlatform: 'WHATSAPP',
-            platformId: '+234 806 123 4567',
-            content: 'What are your business hours?',
-            direction: 'inbound',
-            timestamp: new Date(Date.now() - 30 * 60000).toISOString(),
-            read: false,
-          },
-        ],
-      },
-      {
-        id: '2',
-        contactName: 'Jane Smith',
-        platform: 'INSTAGRAM',
-        platformId: '@jane_smith',
-        lastMessage: 'Is this still available?',
-        timestamp: new Date(Date.now() - 2 * 3600000).toISOString(),
-        unread: 1,
-        messages: [
-          {
-            id: '2-1',
-            contactName: 'Jane Smith',
-            contactPlatform: 'INSTAGRAM',
-            platformId: '@jane_smith',
-            content: 'Hey! I saw your post. Looks great!',
-            direction: 'inbound',
-            timestamp: new Date(Date.now() - 3 * 3600000).toISOString(),
-            read: true,
-          },
-          {
-            id: '2-2',
-            contactName: 'You',
-            contactPlatform: 'INSTAGRAM',
-            platformId: '@jane_smith',
-            content: 'Thanks Jane! Let me know if you have any questions.',
-            direction: 'outbound',
-            timestamp: new Date(Date.now() - 2.5 * 3600000).toISOString(),
-            read: true,
-          },
-          {
-            id: '2-3',
-            contactName: 'Jane Smith',
-            contactPlatform: 'INSTAGRAM',
-            platformId: '@jane_smith',
-            content: 'Is this still available?',
-            direction: 'inbound',
-            timestamp: new Date(Date.now() - 2 * 3600000).toISOString(),
-            read: false,
-          },
-        ],
-      },
-      {
-        id: '3',
-        contactName: 'Bob Wilson',
-        platform: 'FACEBOOK',
-        platformId: 'Bob Wilson',
-        lastMessage: 'Thanks for the quick response!',
-        timestamp: new Date(Date.now() - 24 * 3600000).toISOString(),
-        unread: 0,
-        messages: [
-          {
-            id: '3-1',
-            contactName: 'Bob Wilson',
-            contactPlatform: 'FACEBOOK',
-            platformId: 'Bob Wilson',
-            content: 'Hi, I need help with my order.',
-            direction: 'inbound',
-            timestamp: new Date(Date.now() - 25 * 3600000).toISOString(),
-            read: true,
-          },
-          {
-            id: '3-2',
-            contactName: 'You',
-            contactPlatform: 'FACEBOOK',
-            platformId: 'Bob Wilson',
-            content: 'Sure! What\'s your order number?',
-            direction: 'outbound',
-            timestamp: new Date(Date.now() - 24.5 * 3600000).toISOString(),
-            read: true,
-          },
-          {
-            id: '3-3',
-            contactName: 'Bob Wilson',
-            contactPlatform: 'FACEBOOK',
-            platformId: 'Bob Wilson',
-            content: 'Thanks for the quick response!',
-            direction: 'inbound',
-            timestamp: new Date(Date.now() - 24 * 3600000).toISOString(),
-            read: true,
-          },
-        ],
-      },
-    ]);
-    setLoading(false);
+    const loadConversations = async () => {
+      setLoading(true);
+      try {
+        const token = localStorage.getItem('auth_token');
+        const res = await fetch(`${API_URL}/conversations`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        const list = (data.conversations || data.data || []).map((c: any) => ({
+          id: c.id,
+          contactName: c.contact?.name || c.contact?.platformId || 'Contact',
+          platform: c.platform,
+          platformId: c.contact?.platformId || '',
+          timestamp: c.lastMessageAt || new Date().toISOString(),
+          unread: c.unreadCount || 0,
+          messages: [],
+        }));
+        setConversations(list);
+      } catch (e) {
+        console.error('Failed to load conversations', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadConversations();
   }, []);
 
   const platformColors: Record<string, string> = {
@@ -168,39 +68,54 @@ export default function InboxPage() {
     FACEBOOK: '#0084FF',
   };
 
+  const loadMessages = async (conversation: Conversation) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const res = await fetch(`${API_URL}/messages/conversation/${conversation.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      const msgs: Message[] = (data.messages || data.data || []).map((m: any) => ({
+        id: m.id,
+        content: m.content,
+        direction: m.direction === 'OUTBOUND' ? 'outbound' : 'inbound',
+        timestamp: m.createdAt,
+        read: m.status === 'READ',
+      }));
+      const updated = { ...conversation, messages: msgs };
+      setSelectedConversation(updated);
+      setConversations(prev => prev.map(c => c.id === updated.id ? updated : c));
+    } catch (e) {
+      console.error('Failed to load messages', e);
+    }
+  };
+
   const filteredConversations = conversations.filter(c => {
     const matchesPlatform = filterPlatform === 'all' || c.platform === filterPlatform;
-    const matchesSearch = c.contactName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         c.lastMessage.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = c.contactName.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesPlatform && matchesSearch;
   });
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation) return;
 
-    const newMsg: Message = {
-      id: Date.now().toString(),
-      contactName: 'You',
-      contactPlatform: selectedConversation.platform,
-      platformId: selectedConversation.platformId,
-      content: newMessage,
-      direction: 'outbound',
-      timestamp: new Date().toISOString(),
-      read: true,
-    };
-
-    const updatedConv = {
-      ...selectedConversation,
-      messages: [...selectedConversation.messages, newMsg],
-      lastMessage: newMessage,
-      timestamp: new Date().toISOString(),
-    };
-
-    setConversations(conversations.map(c => 
-      c.id === selectedConversation.id ? updatedConv : c
-    ));
-    setSelectedConversation(updatedConv);
-    setNewMessage('');
+    try {
+      const token = localStorage.getItem('auth_token');
+      const res = await fetch(`${API_URL}/messages/send/${selectedConversation.id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ content: newMessage }),
+      });
+      if (res.ok) {
+        setNewMessage('');
+        await loadMessages(selectedConversation);
+      }
+    } catch (e) {
+      console.error('Failed to send message', e);
+    }
   };
 
   const formatTime = (timestamp: string) => {
@@ -288,7 +203,10 @@ export default function InboxPage() {
             filteredConversations.map((conv) => (
               <div
                 key={conv.id}
-                onClick={() => setSelectedConversation(conv)}
+                onClick={() => {
+                  setSelectedConversation(conv);
+                  loadMessages(conv);
+                }}
                 style={{
                   padding: '16px',
                   borderBottom: '1px solid #f3f4f6',
