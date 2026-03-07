@@ -19,7 +19,10 @@ export default function LoginPage() {
     setDebug('Starting login...');
 
     try {
-      const response = await fetch('http://localhost:5013/api/v1/auth/login', {
+      const base =
+        process.env.NEXT_PUBLIC_API_URL ||
+        'https://kryroschatagentbackend.onrender.com/api/v1';
+      const response = await fetch(`${base}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -172,10 +175,7 @@ export default function LoginPage() {
           </button>
         </form>
         
-        <p style={{ textAlign: 'center', marginTop: '16px', fontSize: '14px', color: '#6b7280' }}>
-          Don't have an account?{' '}
-          <a href="/auth/register" style={{ color: '#3b82f6', textDecoration: 'none', fontWeight: '500' }}>Create one</a>
-        </p>
+        
       </div>
     </div>
   );

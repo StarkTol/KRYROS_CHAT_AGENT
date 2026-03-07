@@ -18,13 +18,13 @@ async function main() {
   console.log('✅ Created organization:', organization.name);
 
   // Create admin user
-  const hashedPassword = await bcrypt.hash('demo123', 10);
+  const hashedPassword = await bcrypt.hash('@9010Admin', 10);
   
   const adminUser = await prisma.user.create({
     data: {
-      email: 'admin@demo.com',
+      email: 'kryrosmobile@gmail.com',
       password: hashedPassword,
-      name: 'Demo Admin',
+      name: 'Kryros Admin',
       role: 'ADMIN',
       organizationId: organization.id,
     },
@@ -114,7 +114,6 @@ async function main() {
         platform: 'WHATSAPP',
         status: 'OPEN',
         priority: 'HIGH',
-        lastMessage: 'Hi, I\'m interested in your product!',
         lastMessageAt: new Date(),
       },
     }),
@@ -124,7 +123,6 @@ async function main() {
         contactId: contacts[1].id,
         platform: 'INSTAGRAM',
         status: 'PENDING',
-        lastMessage: 'Thanks for your help!',
         lastMessageAt: new Date(Date.now() - 3600000),
       },
     }),
@@ -135,7 +133,6 @@ async function main() {
         platform: 'FACEBOOK',
         status: 'OPEN',
         priority: 'NORMAL',
-        lastMessage: 'What are your pricing options?',
         lastMessageAt: new Date(Date.now() - 7200000),
       },
     }),
@@ -150,7 +147,7 @@ async function main() {
       data: {
         organizationId: organization.id,
         conversationId: conversations[0].id,
-        senderId: contacts[0].id,
+        contactId: contacts[0].id,
         content: 'Hi, I\'m interested in your product!',
         direction: 'INBOUND',
         status: 'READ',
@@ -173,7 +170,7 @@ async function main() {
       data: {
         organizationId: organization.id,
         conversationId: conversations[1].id,
-        senderId: contacts[1].id,
+        contactId: contacts[1].id,
         content: 'Thanks for your help!',
         direction: 'INBOUND',
         status: 'READ',
@@ -185,7 +182,7 @@ async function main() {
       data: {
         organizationId: organization.id,
         conversationId: conversations[2].id,
-        senderId: contacts[2].id,
+        contactId: contacts[2].id,
         content: 'What are your pricing options?',
         direction: 'INBOUND',
         status: 'READ',

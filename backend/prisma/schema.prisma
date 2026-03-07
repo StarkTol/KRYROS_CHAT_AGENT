@@ -15,21 +15,21 @@ datasource db {
 // ============================================
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  password      String
-  name          String?
-  role          UserRole  @default(ADMIN)
-  organization  Organization? @relation(fields: [organizationId], references: [id])
+  id             String        @id @default(cuid())
+  email          String        @unique
+  password       String
+  name           String?
+  role           UserRole      @default(ADMIN)
+  organization   Organization? @relation(fields: [organizationId], references: [id])
   organizationId String?
-  isActive      Boolean   @default(true)
-  lastLoginAt   DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  isActive       Boolean       @default(true)
+  lastLoginAt    DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
   // Relations
-  conversations   Conversation[]
-  sentMessages    Message[]       @relation("SentMessages")
+  conversations Conversation[]
+  sentMessages  Message[]      @relation("SentMessages")
 
   @@index([email])
   @@index([organizationId])
@@ -46,30 +46,30 @@ enum UserRole {
 // ============================================
 
 model Organization {
-  id              String   @id @default(cuid())
+  id              String           @id @default(cuid())
   name            String
-  slug            String   @unique
+  slug            String           @unique
   logoUrl         String?
   businessProfile BusinessProfile?
-  
+
   // Subscription
-  plan            PlanType @default(FREE)
+  plan               PlanType  @default(FREE)
   subscriptionEndsAt DateTime?
-  
+
   // Relations
-  users             User[]
-  contacts          Contact[]
-  conversations     Conversation[]
-  messages          Message[]
-  platforms         PlatformConnection[]
-  automations       Automation[]
-  automationLogs    AutomationLog[]
-  businessHours     BusinessHours[]
-  followUps         FollowUp[]
-  settings          Settings?
-  
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  users          User[]
+  contacts       Contact[]
+  conversations  Conversation[]
+  messages       Message[]
+  platforms      PlatformConnection[]
+  automations    Automation[]
+  automationLogs AutomationLog[]
+  businessHours  BusinessHours[]
+  followUps      FollowUp[]
+  settings       Settings?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([slug])
 }
@@ -86,23 +86,23 @@ enum PlanType {
 // ============================================
 
 model BusinessProfile {
-  id                String       @id @default(cuid())
-  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId    String       @unique
-  
-  businessName      String
-  businessEmail     String?
-  businessPhone     String?
-  businessAddress   String?
-  website           String?
-  description       String?
-  timezone          String       @default("UTC")
-  
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String       @unique
+
+  businessName    String
+  businessEmail   String?
+  businessPhone   String?
+  businessAddress String?
+  website         String?
+  description     String?
+  timezone        String  @default("UTC")
+
   // Auto-reply settings
-  defaultAutoReply  String?
-  
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
+  defaultAutoReply String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ============================================
@@ -110,35 +110,35 @@ model BusinessProfile {
 // ============================================
 
 model PlatformConnection {
-  id              String       @id @default(cuid())
-  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId  String
-  
-  platform        PlatformType
-  status          ConnectionStatus @default(DISCONNECTED)
-  
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  platform PlatformType
+  status   ConnectionStatus @default(DISCONNECTED)
+
   // Credentials (encrypted in production)
-  accessToken     String?
-  phoneNumberId   String?  // WhatsApp
-  instagramId     String?  // Instagram
-  facebookPageId  String?  // Facebook
-  
+  accessToken    String?
+  phoneNumberId  String? // WhatsApp
+  instagramId    String? // Instagram
+  facebookPageId String? // Facebook
+
   webhookVerifyToken String?
-  
+
   // Metadata
-  displayName     String?
-  profilePicture  String?
-  
+  displayName    String?
+  profilePicture String?
+
   // Sync settings
-  syncEnabled     Boolean     @default(true)
-  lastSyncAt      DateTime?
-  
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  
+  syncEnabled Boolean   @default(true)
+  lastSyncAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Relations
-  conversations   Conversation[]
-  
+  conversations Conversation[]
+
   @@unique([organizationId, platform])
   @@index([organizationId])
   @@index([platform])
@@ -162,42 +162,42 @@ enum ConnectionStatus {
 // ============================================
 
 model Contact {
-  id              String       @id @default(cuid())
-  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId  String
-  
-  // Identity
-  platformId      String       // External ID from platform
-  platform        PlatformType
-  name            String?
-  username        String?
-  profilePicture  String?
-  
-  // CRM Fields
-  status          ContactStatus @default(NEW)
-  source          MessageSource @default(DIRECT)
-  notes           String?
-  tags            String[]
-  
-  // AI Chat Session
-  aiChatEnabled   Boolean      @default(false)  // Is AI handling this chat?
-  humanTakeover   Boolean      @default(false) // Human takeover requested
-  lastAiResponse  String?      // Last AI response given
-  
-  // Metadata
-  isBlocked       Boolean      @default(false)
-  isArchived      Boolean      @default(false)
-  lastContactedAt DateTime?
-  lastInteractionAt DateTime? // Last message interaction
-  
-  // Relations
-  conversations   Conversation[]
-  followUps       FollowUp[]
-  messages        Message[]
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
 
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-  
+  // Identity
+  platformId     String // External ID from platform
+  platform       PlatformType
+  name           String?
+  username       String?
+  profilePicture String?
+
+  // CRM Fields
+  status ContactStatus @default(NEW)
+  source MessageSource @default(DIRECT)
+  notes  String?
+  tags   String[]
+
+  // AI Chat Session
+  aiChatEnabled  Boolean @default(false) // Is AI handling this chat?
+  humanTakeover  Boolean @default(false) // Human takeover requested
+  lastAiResponse String? // Last AI response given
+
+  // Metadata
+  isBlocked         Boolean   @default(false)
+  isArchived        Boolean   @default(false)
+  lastContactedAt   DateTime?
+  lastInteractionAt DateTime? // Last message interaction
+
+  // Relations
+  conversations Conversation[]
+  followUps     FollowUp[]
+  messages      Message[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@unique([organizationId, platform, platformId])
   @@index([organizationId])
   @@index([platform])
@@ -227,36 +227,36 @@ enum MessageSource {
 // ============================================
 
 model Conversation {
-  id              String           @id @default(cuid())
-  organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId  String
-  
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
   // Participants
-  contact         Contact          @relation(fields: [contactId], references: [id])
-  contactId       String
-  assignedTo      User?           @relation(fields: [assignedToId], references: [id])
-  assignedToId    String?
-  
+  contact      Contact @relation(fields: [contactId], references: [id])
+  contactId    String
+  assignedTo   User?   @relation(fields: [assignedToId], references: [id])
+  assignedToId String?
+
   // Platform
-  platform        PlatformType
-  platformConnection PlatformConnection? @relation(fields: [platformConnectionId], references: [id])
+  platform             PlatformType
+  platformConnection   PlatformConnection? @relation(fields: [platformConnectionId], references: [id])
   platformConnectionId String?
-  
+
   // Status
-  status          ConversationStatus @default(OPEN)
-  priority        Priority         @default(NORMAL)
-  
+  status   ConversationStatus @default(OPEN)
+  priority Priority           @default(NORMAL)
+
   // Metadata
-  subject         String?
-  lastMessageAt   DateTime?
-  unreadCount     Int              @default(0)
-  
+  subject       String?
+  lastMessageAt DateTime?
+  unreadCount   Int       @default(0)
+
   // Relations
-  messages        Message[]
-  
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  
+  messages Message[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([organizationId])
   @@index([contactId])
   @@index([assignedToId])
@@ -283,49 +283,49 @@ enum Priority {
 // ============================================
 
 model Message {
-  id              String       @id @default(cuid())
-  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId  String
-  
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
   // Conversation
-  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  conversationId  String
-  
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversationId String
+
   // Contact (for easier querying)
-  contact         Contact?     @relation(fields: [contactId], references: [id])
-  contactId       String?
-  
+  contact   Contact? @relation(fields: [contactId], references: [id])
+  contactId String?
+
   // Sender
-  sender          User?        @relation("SentMessages", fields: [senderId], references: [id])
-  senderId        String?
-  
+  sender   User?   @relation("SentMessages", fields: [senderId], references: [id])
+  senderId String?
+
   // Content
-  platformMessageId String?    // Original platform message ID
-  content         String
-  contentType     MessageType  @default(TEXT)
-  mediaUrl        String?
-  mediaMimeType   String?
-  
+  platformMessageId String? // Original platform message ID
+  content           String
+  contentType       MessageType @default(TEXT)
+  mediaUrl          String?
+  mediaMimeType     String?
+
   // Direction
-  direction       MessageDirection
-  
+  direction MessageDirection
+
   // Status
-  status          MessageStatus @default(PENDING)
-  deliveredAt     DateTime?
-  readAt          DateTime?
-  
+  status      MessageStatus @default(PENDING)
+  deliveredAt DateTime?
+  readAt      DateTime?
+
   // AI Fields
-  isAutomated     Boolean      @default(false)   // Was this sent by AI?
-  aiUsed          Boolean      @default(false)  // Did AI generate this response?
-  aiModel         String?      // Which AI model used
+  isAutomated            Boolean @default(false) // Was this sent by AI?
+  aiUsed                 Boolean @default(false) // Did AI generate this response?
+  aiModel                String? // Which AI model used
   humanTakeoverTriggered Boolean @default(false) // Did customer request human?
-  
+
   // Metadata
-  metadata        Json?
-  
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-  
+  metadata Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([organizationId])
   @@index([conversationId])
   @@index([contactId])
@@ -362,47 +362,47 @@ enum MessageStatus {
 // ============================================
 
 model Automation {
-  id              String       @id @default(cuid())
-  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId  String
-  
-  name            String
-  description     String?
-  trigger         AutomationTrigger
-  conditions      Json?        // JSON array of conditions
-  action          AutomationAction
-  
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  name        String
+  description String?
+  trigger     AutomationTrigger
+  conditions  Json? // JSON array of conditions
+  action      AutomationAction
+
   // Action details
-  replyContent    String?
-  delayMinutes    Int          @default(0)
-  
+  replyContent String?
+  delayMinutes Int     @default(0)
+
   // Status
-  isActive        Boolean      @default(true)
-  priority        Int          @default(0)
-  
+  isActive Boolean @default(true)
+  priority Int     @default(0)
+
   // Limits (anti-spam)
-  maxPerDay       Int?
-  maxPerContact   Int?
-  
+  maxPerDay     Int?
+  maxPerContact Int?
+
   // Relations
-  logs            AutomationLog[]
-  
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-  
+  logs AutomationLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([organizationId])
   @@index([trigger])
   @@index([isActive])
 }
 
 enum AutomationTrigger {
-  FIRST_MESSAGE        // First message from a new contact
-  KEYWORD_MATCH        // Message contains specific keyword
-  BUSINESS_HOURS       // Message received during business hours
+  FIRST_MESSAGE // First message from a new contact
+  KEYWORD_MATCH // Message contains specific keyword
+  BUSINESS_HOURS // Message received during business hours
   OUTSIDE_BUSINESS_HOURS
-  NO_REPLY_AFTER       // No reply after X minutes
-  CONTACT_STATUS       // Contact status changes
-  DAILY_DIGEST         // Daily summary
+  NO_REPLY_AFTER // No reply after X minutes
+  CONTACT_STATUS // Contact status changes
+  DAILY_DIGEST // Daily summary
 }
 
 enum AutomationAction {
@@ -415,21 +415,21 @@ enum AutomationAction {
 }
 
 model AutomationLog {
-  id              String       @id @default(cuid())
-  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId  String
-  
-  automation      Automation   @relation(fields: [automationId], references: [id], onDelete: Cascade)
-  automationId   String
-  
-  contactId       String
-  conversationId  String
-  
-  trigger         AutomationTrigger
-  action          AutomationAction
-  result          Json?
-  executedAt      DateTime     @default(now())
-  
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  automation   Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  automationId String
+
+  contactId      String
+  conversationId String
+
+  trigger    AutomationTrigger
+  action     AutomationAction
+  result     Json?
+  executedAt DateTime          @default(now())
+
   @@index([organizationId])
   @@index([automationId])
   @@index([executedAt])
@@ -440,20 +440,20 @@ model AutomationLog {
 // ============================================
 
 model BusinessHours {
-  id              String       @id @default(cuid())
-  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId  String
-  
-  dayOfWeek       Int          // 0 = Sunday, 6 = Saturday
-  isOpen          Boolean      @default(false)
-  openTime        String?      // "09:00"
-  closeTime       String?      // "17:00"
-  timezone        String       @default("UTC")
-  
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  dayOfWeek Int // 0 = Sunday, 6 = Saturday
+  isOpen    Boolean @default(false)
+  openTime  String? // "09:00"
+  closeTime String? // "17:00"
+  timezone  String  @default("UTC")
+
   // Auto-reply outside hours
-  autoReplyEnabled Boolean     @default(false)
-  autoReplyContent  String?
-  
+  autoReplyEnabled Boolean @default(false)
+  autoReplyContent String?
+
   @@unique([organizationId, dayOfWeek])
   @@index([organizationId])
 }
@@ -463,30 +463,30 @@ model BusinessHours {
 // ============================================
 
 model FollowUp {
-  id              String           @id @default(cuid())
-  organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId  String
-  
-  contact         Contact          @relation(fields: [contactId], references: [id])
-  contactId       String
-  
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  contact   Contact @relation(fields: [contactId], references: [id])
+  contactId String
+
   // Details
-  type            FollowUpType
-  scheduledAt     DateTime
-  message         String?
-  
+  type        FollowUpType
+  scheduledAt DateTime
+  message     String?
+
   // Status
-  status          FollowUpStatus   @default(PENDING)
-  completedAt     DateTime?
-  cancelledAt     DateTime?
-  
+  status      FollowUpStatus @default(PENDING)
+  completedAt DateTime?
+  cancelledAt DateTime?
+
   // Reminder
-  remindAgent     Boolean          @default(true)
-  reminderSentAt   DateTime?
-  
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  
+  remindAgent    Boolean   @default(true)
+  reminderSentAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([organizationId])
   @@index([contactId])
   @@index([scheduledAt])
@@ -512,19 +512,19 @@ enum FollowUpStatus {
 // ============================================
 
 model AuditLog {
-  id              String   @id @default(cuid())
-  organizationId  String
-  
-  action          String
-  entityType      String
-  entityId        String?
-  userId          String?
-  changes         Json?
-  ipAddress       String?
-  userAgent       String?
-  
-  createdAt       DateTime @default(now())
-  
+  id             String @id @default(cuid())
+  organizationId String
+
+  action     String
+  entityType String
+  entityId   String?
+  userId     String?
+  changes    Json?
+  ipAddress  String?
+  userAgent  String?
+
+  createdAt DateTime @default(now())
+
   @@index([organizationId])
   @@index([entityType])
   @@index([createdAt])
@@ -535,33 +535,34 @@ model AuditLog {
 // ============================================
 
 model Settings {
-  id                String   @id @default(cuid())
-  organizationId    String   @unique
-  
+  id             String       @id @default(cuid())
+  organizationId String       @unique
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
   // Business Info
-  businessName       String   @default("My Business")
+  businessName        String  @default("My Business")
   businessDescription String? // Description for AI context
-  productServiceInfo String?  // Products/services for AI
-  
+  productServiceInfo  String? // Products/services for AI
+
   // AI Configuration
-  aiEnabled         Boolean  @default(false)       // Is AI enabled?
-  aiModel          String   @default("gpt-4")    // Which AI model
-  aiTone           String   @default("friendly")  // friendly, formal, casual
-  autoReplyEnabled  Boolean  @default(true)        // Auto-reply to messages
-  
+  aiEnabled        Boolean @default(false) // Is AI enabled?
+  aiModel          String  @default("gpt-4") // Which AI model
+  aiTone           String  @default("friendly") // friendly, formal, casual
+  autoReplyEnabled Boolean @default(true) // Auto-reply to messages
+
   // Human Takeover
-  humanTakeoverEnabled Boolean @default(true)      // Allow human takeover
+  humanTakeoverEnabled Boolean @default(true) // Allow human takeover
   humanTakeoverMessage String? // Message when human takeover happens
-  
+
   // OpenAI (stored encrypted in production)
-  openaiApiKey      String?  // Organization's own OpenAI key
-  
+  openaiApiKey String? // Organization's own OpenAI key
+
   // Response Settings
-  responseDelay     Int      @default(1000)        // Delay before AI response (ms)
-  maxResponseLength Int      @default(500)         // Max characters in response
-  
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  
+  responseDelay     Int @default(1000) // Delay before AI response (ms)
+  maxResponseLength Int @default(500) // Max characters in response
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([organizationId])
 }

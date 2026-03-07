@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5013/api/v1';
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  'https://kryroschatagentbackend.onrender.com/api/v1';
 
 export const api = axios.create({
   baseURL: API_URL,
@@ -41,12 +43,6 @@ api.interceptors.response.use(
 export const authApi = {
   login: (email: string, password: string) =>
     api.post('/auth/login', { email, password }),
-  register: (data: {
-    name: string;
-    email: string;
-    password: string;
-    organizationName?: string;
-  }) => api.post('/auth/register', data),
   me: () => api.get('/auth/me'),
 };
 
