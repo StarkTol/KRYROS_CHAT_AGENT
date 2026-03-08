@@ -119,12 +119,17 @@ export class SettingsService {
       where: {
         organizationId_platform: {
           organizationId,
-          platform: platform as any,
+          platform: platform.toUpperCase() as any,
         },
       },
       data: {
         status: 'DISCONNECTED',
         accessToken: null,
+        phoneNumberId: null,
+        instagramId: null,
+        facebookPageId: null,
+        webhookVerifyToken: null,
+        syncEnabled: false,
       },
     });
   }

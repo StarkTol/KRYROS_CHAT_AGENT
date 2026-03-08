@@ -393,6 +393,43 @@ export default function SettingsPage() {
                 <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#0c4a6e' }}>
                   <strong>Verify Token:</strong> {platforms.whatsapp.webhookVerifyToken}
                 </p>
+                <div style={{ marginTop: '12px' }}>
+                  <button
+                    onClick={async () => {
+                      setLoading(true);
+                      try {
+                        const token = localStorage.getItem('auth_token');
+                        const res = await fetch(`${API_URL}/settings/platforms/whatsapp/disconnect`, {
+                          method: 'POST',
+                          headers: { Authorization: `Bearer ${token}` },
+                        });
+                        if (res.ok) {
+                          setPlatforms(prev => ({
+                            ...prev,
+                            whatsapp: {
+                              enabled: false,
+                              phoneNumberId: '',
+                              accessToken: '',
+                              webhookVerifyToken: prev.whatsapp.webhookVerifyToken,
+                              businessAccountId: '',
+                              connectionId: '',
+                            },
+                          }));
+                          setMessage({ type: 'success', text: 'WhatsApp disconnected. You can connect a new number now.' });
+                        } else {
+                          setMessage({ type: 'error', text: 'Failed to disconnect. Please try again.' });
+                        }
+                      } catch {
+                        setMessage({ type: 'error', text: 'Network error while disconnecting.' });
+                      } finally {
+                        setLoading(false);
+                      }
+                    }}
+                    style={{ padding: '10px 16px', border: '1px solid #e11d48', color: '#e11d48', background: 'white', borderRadius: '8px', cursor: 'pointer' }}
+                  >
+                    Disconnect
+                  </button>
+                </div>
               </div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
