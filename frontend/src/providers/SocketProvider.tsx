@@ -32,7 +32,7 @@ export function SocketProvider({ children }: SocketProviderProps) {
       return;
     }
 
-    const socketInstance = io('http://localhost:5013', {
+    const socketInstance = io('https://kryroschatagentbackend.onrender.com', {
       auth: { token },
       transports: ['websocket', 'polling'],
     });

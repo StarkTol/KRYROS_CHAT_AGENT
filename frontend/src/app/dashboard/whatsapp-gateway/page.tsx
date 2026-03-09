@@ -75,7 +75,7 @@ export default function WhatsAppGatewayPage() {
   const fetchStatus = async () => {
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch('http://localhost:5013/api/whatsapp/status', {
+      const response = await fetch('https://kryroschatagentbackend.onrender.com/api/whatsapp/status', {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await response.json();
@@ -95,7 +95,7 @@ export default function WhatsAppGatewayPage() {
     setLoading(true);
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch('http://localhost:5013/api/whatsapp/connect', {
+      const response = await fetch('https://kryroschatagentbackend.onrender.com/api/whatsapp/connect', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -107,7 +107,7 @@ export default function WhatsAppGatewayPage() {
       
       // Poll for QR code
       const qrInterval = setInterval(async () => {
-        const qrResponse = await fetch('http://localhost:5013/api/whatsapp/qr', {
+        const qrResponse = await fetch('https://kryroschatagentbackend.onrender.com/api/whatsapp/qr', {
           headers: { Authorization: `Bearer ${token}` },
         });
         const qrData = await qrResponse.json();
@@ -134,7 +134,7 @@ export default function WhatsAppGatewayPage() {
   const disconnectWhatsApp = async () => {
     try {
       const token = localStorage.getItem('auth_token');
-      await fetch('http://localhost:5013/api/whatsapp/disconnect', {
+      await fetch('https://kryroschatagentbackend.onrender.com/api/whatsapp/disconnect', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -148,7 +148,7 @@ export default function WhatsAppGatewayPage() {
   const fetchConversations = async () => {
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch('http://localhost:5013/api/whatsapp/conversations', {
+      const response = await fetch('https://kryroschatagentbackend.onrender.com/api/whatsapp/conversations', {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await response.json();
@@ -164,7 +164,7 @@ export default function WhatsAppGatewayPage() {
     try {
       const token = localStorage.getItem('auth_token');
       const response = await fetch(
-        `http://localhost:5013/api/whatsapp/messages/${phoneNumber}`,
+        `https://kryroschatagentbackend.onrender.com/api/whatsapp/messages/${phoneNumber}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -175,7 +175,7 @@ export default function WhatsAppGatewayPage() {
         
         // Mark as read
         await fetch(
-          `http://localhost:5013/api/whatsapp/messages/${phoneNumber}/read`,
+          `https://kryroschatagentbackend.onrender.com/api/whatsapp/messages/${phoneNumber}/read`,
           {
             method: 'POST',
             headers: { Authorization: `Bearer ${token}` },
@@ -193,7 +193,7 @@ export default function WhatsAppGatewayPage() {
     setSending(true);
     try {
       const token = localStorage.getItem('auth_token');
-      await fetch('http://localhost:5013/api/whatsapp/send', {
+      await fetch('https://kryroschatagentbackend.onrender.com/api/whatsapp/send', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
