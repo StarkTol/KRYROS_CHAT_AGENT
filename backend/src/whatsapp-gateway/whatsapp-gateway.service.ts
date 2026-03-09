@@ -90,11 +90,11 @@ export class WhatsAppGatewayService implements OnModuleInit, OnModuleDestroy {
       });
 
       // Handle QR code generation
-      this.socket.on('creds.update', async () => {
+      this.socket?.on('creds.update', async () => {
         await authState.saveCreds();
       });
 
-      this.socket.on('connection.update', (update) => {
+      this.socket?.on('connection.update', (update) => {
         const { connection, lastDisconnect, qr } = update;
 
         if (qr) {
@@ -127,7 +127,7 @@ export class WhatsAppGatewayService implements OnModuleInit, OnModuleDestroy {
       });
 
       // Handle incoming messages
-      this.socket.on('messages.upsert', async ({ messages, type }) => {
+      this.socket?.on('messages.upsert', async ({ messages, type }) => {
         if (type !== 'notify') return;
         
         for (const msg of messages) {
@@ -195,7 +195,6 @@ export class WhatsAppGatewayService implements OnModuleInit, OnModuleDestroy {
           contactId: contact.id,
           content: messageText,
           direction: 'INBOUND',
-          platform: 'WHATSAPP',
           platformMessageId: msg.key.id,
           status: 'DELIVERED',
         },
@@ -206,7 +205,6 @@ export class WhatsAppGatewayService implements OnModuleInit, OnModuleDestroy {
         where: { id: contact.id },
         data: {
           lastInteractionAt: new Date(),
-          lastMessageAt: new Date(),
         },
       });
 
@@ -301,8 +299,8 @@ export class WhatsAppGatewayService implements OnModuleInit, OnModuleDestroy {
       
       const businessContext = {
         businessName: settings.businessName || 'KRYROS CHAT AGENT',
-        businessDescription: settings.businessDescription,
-        productServiceInfo: settings.productServiceInfo,
+        businessDescription: settings.businessDescription || '',
+        productServiceInfo: settings.productServiceInfo || '',
         tone: settings.aiTone || 'friendly',
       };
 
@@ -360,16 +358,13 @@ export class WhatsAppGatewayService implements OnModuleInit, OnModuleDestroy {
       });
 
       if (contact) {
-        const organization = await this.prisma.organization.findFirst();
-        
         await this.prisma.message.create({
           data: {
-            organizationId: organization?.id,
+            organizationId: contact.organizationId,
             conversationId: `whatsapp-${phoneNumber}`,
             contactId: contact.id,
             content: messageText,
             direction: 'OUTBOUND',
-            platform: 'WHATSAPP',
             platformMessageId: response?.key?.id,
             status: 'SENT',
             isAutomated: true,
