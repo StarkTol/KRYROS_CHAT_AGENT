@@ -94,6 +94,7 @@ export default function DashboardLayout({
   const navItems = [
     { name: 'Dashboard', href: '/dashboard' },
     { name: 'Inbox', href: '/dashboard/inbox' },
+    { name: '📱 WhatsApp Gateway', href: '/dashboard/whatsapp-gateway' },
     { name: 'Contacts', href: '/dashboard/contacts' },
     { name: '🤖 AI Chatbot', href: '/dashboard/ai-chatbot' },
     { name: 'Automation', href: '/dashboard/automation' },

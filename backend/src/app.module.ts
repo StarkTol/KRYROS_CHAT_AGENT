@@ -13,6 +13,8 @@ import { WebhooksModule } from './webhooks/webhooks.module';
 import { SettingsModule } from './config/settings.module';
 import { PlatformsModule } from './platforms/platforms.module';
 import { AiModule } from './ai/ai.module';
+import { WhatsAppGatewayModule } from './whatsapp-gateway/whatsapp-gateway.module';
+import { EventsModule } from './events/events.module';
 
 @Module({
   imports: [
@@ -38,6 +40,8 @@ import { AiModule } from './ai/ai.module';
     SettingsModule,
     PlatformsModule,
     AiModule,
+    WhatsAppGatewayModule,
+    EventsModule,
   ],
 })
 export class AppModule {}
