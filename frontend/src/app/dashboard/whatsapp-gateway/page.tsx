@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://kryroschatagentbackend.onrender.com/api/v1';
+
 interface GatewayStatus {
   connected: boolean;
   connecting: boolean;
@@ -75,7 +77,7 @@ export default function WhatsAppGatewayPage() {
   const fetchStatus = async () => {
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch('https://kryroschatagentbackend.onrender.com/api/whatsapp/status', {
+      const response = await fetch(`${API_URL}/whatsapp/status`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await response.json();
@@ -95,7 +97,7 @@ export default function WhatsAppGatewayPage() {
     setLoading(true);
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch('https://kryroschatagentbackend.onrender.com/api/whatsapp/connect', {
+      const response = await fetch(`${API_URL}/whatsapp/connect`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -107,7 +109,7 @@ export default function WhatsAppGatewayPage() {
       
       // Poll for QR code
       const qrInterval = setInterval(async () => {
-        const qrResponse = await fetch('https://kryroschatagentbackend.onrender.com/api/whatsapp/qr', {
+        const qrResponse = await fetch(`${API_URL}/whatsapp/qr`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const qrData = await qrResponse.json();
@@ -134,7 +136,7 @@ export default function WhatsAppGatewayPage() {
   const disconnectWhatsApp = async () => {
     try {
       const token = localStorage.getItem('auth_token');
-      await fetch('https://kryroschatagentbackend.onrender.com/api/whatsapp/disconnect', {
+      await fetch(`${API_URL}/whatsapp/disconnect`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -148,7 +150,7 @@ export default function WhatsAppGatewayPage() {
   const fetchConversations = async () => {
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch('https://kryroschatagentbackend.onrender.com/api/whatsapp/conversations', {
+      const response = await fetch(`${API_URL}/whatsapp/conversations`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await response.json();
@@ -193,7 +195,7 @@ export default function WhatsAppGatewayPage() {
     setSending(true);
     try {
       const token = localStorage.getItem('auth_token');
-      await fetch('https://kryroschatagentbackend.onrender.com/api/whatsapp/send', {
+      await fetch(`${API_URL}/whatsapp/send`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
