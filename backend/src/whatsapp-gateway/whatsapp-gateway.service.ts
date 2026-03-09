@@ -8,8 +8,10 @@ import { EventsGateway } from '../events/events.gateway';
 interface WASocket {
   sendMessage: (jid: string, content: any, options?: any) => Promise<any>;
   end: (error?: Error) => void;
-  on: (event: string, callback: (data: any) => void) => void;
-  off: (event: string, callback?: (data: any) => void) => void;
+  ev: {
+    on: (event: string, callback: (data: any) => void) => void;
+    off: (event: string, callback?: (data: any) => void) => void;
+  };
 }
 
 interface Message {
@@ -89,11 +91,11 @@ export class WhatsAppGatewayService implements OnModuleInit, OnModuleDestroy {
       }) as WASocket;
 
       // Handle QR code generation
-      this.socket?.on('creds.update', async () => {
+      this.socket?.ev.on('creds.update', async () => {
         await authState.saveCreds();
       });
 
-      this.socket?.on('connection.update', (update) => {
+      this.socket?.ev.on('connection.update', (update) => {
         const { connection, lastDisconnect, qr } = update;
 
         if (qr) {
@@ -126,7 +128,7 @@ export class WhatsAppGatewayService implements OnModuleInit, OnModuleDestroy {
       });
 
       // Handle incoming messages
-      this.socket?.on('messages.upsert', async ({ messages, type }) => {
+      this.socket?.ev.on('messages.upsert', async ({ messages, type }) => {
         if (type !== 'notify') return;
         
         for (const msg of messages) {
