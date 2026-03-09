@@ -82,12 +82,11 @@ export class WhatsAppGatewayService implements OnModuleInit, OnModuleDestroy {
       const authState = await useMultiFileAuthState('./whatsapp-auth');
       
       this.socket = makeWASocket({
-        print: (msg: any) => this.logger.debug(msg),
         browser: ['KRYROS CHAT AGENT', 'Chrome', '120.0.0'],
         auth: authState.state,
         connectTimeoutMs: 60000,
         keepAliveIntervalMs: 30000,
-      });
+      }) as WASocket;
 
       // Handle QR code generation
       this.socket?.on('creds.update', async () => {

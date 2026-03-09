@@ -99,7 +99,7 @@ export class WhatsAppGatewayController {
    */
   @Get('conversations')
   @UseGuards(JwtAuthGuard)
-  async getConversations(@Request() req) {
+  async getConversations(@Request() req: any) {
     const organizationId = req.user.organizationId;
 
     // Get unique contacts with WhatsApp conversations
@@ -136,7 +136,7 @@ export class WhatsAppGatewayController {
   @UseGuards(JwtAuthGuard)
   async getMessages(
     @Param('phoneNumber') phoneNumber: string,
-    @Request() req,
+    @Request() req: any,
   ) {
     const organizationId = req.user.organizationId;
 
@@ -198,7 +198,7 @@ export class WhatsAppGatewayController {
   @UseGuards(JwtAuthGuard)
   async markAsRead(
     @Param('phoneNumber') phoneNumber: string,
-    @Request() req,
+    @Request() req: any,
   ) {
     const organizationId = req.user.organizationId;
 
