@@ -2,6 +2,9 @@
   "name": "business-support-backend",
   "version": "1.0.0",
   "description": "Omnichannel Business Inbox Backend - NestJS + Prisma",
+  "engines": {
+    "node": "18.x"
+  },
   "scripts": {
     "build": "nest build",
     "start": "nest start",

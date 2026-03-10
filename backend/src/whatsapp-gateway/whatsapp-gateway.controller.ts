@@ -19,9 +19,15 @@ export class WhatsAppGatewayController {
   async connect() {
     try {
       const result = await this.whatsappGateway.connect();
+      let qrDataUrl: string | undefined;
+      if (result.qrCode) {
+        const qrcode = await import('qrcode');
+        qrDataUrl = await qrcode.toDataURL(result.qrCode);
+      }
       return {
         success: true,
         ...result,
+        qrCode: qrDataUrl || undefined,
       };
     } catch (error) {
       return {
@@ -37,19 +43,21 @@ export class WhatsAppGatewayController {
   @Get('qr')
   @UseGuards(JwtAuthGuard)
   async getQRCode(@Res() res: Response) {
-    const qrCode = this.whatsappGateway.getQRCode();
+    const qrText = this.whatsappGateway.getQRCode();
     
-    if (!qrCode) {
+    if (!qrText) {
       return res.status(404).json({ 
         success: false, 
         message: 'No QR code available. Call /connect first.' 
       });
     }
 
-    // Return as data URL for display
+    // Convert QR text to PNG data URL for display
+    const qrcode = await import('qrcode');
+    const dataUrl = await qrcode.toDataURL(qrText);
     return res.json({
       success: true,
-      qrCode: `data:image/png;base64,${qrCode}`,
+      qrCode: dataUrl,
     });
   }
 
