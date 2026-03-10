@@ -138,7 +138,7 @@ export class WhatsAppGatewayService implements OnModuleInit, OnModuleDestroy {
         }
       });
 
-      // Wait for connection or QR
+      // Wait for connection or QR (do not throw on timeout)
       await this.waitForConnection(30000);
       
       return { 
@@ -148,7 +148,11 @@ export class WhatsAppGatewayService implements OnModuleInit, OnModuleDestroy {
     } catch (error) {
       this.isConnecting = false;
       this.logger.error('Failed to connect to WhatsApp', error);
-      throw error;
+      // Swallow error here to avoid unhandled rejection in async reconnections
+      return { 
+        qrCode: this.qrCode || '', 
+        status: 'error' 
+      };
     }
   }
 
@@ -156,14 +160,15 @@ export class WhatsAppGatewayService implements OnModuleInit, OnModuleDestroy {
    * Wait for connection or QR code
    */
   private waitForConnection(timeout: number): Promise<void> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       const startTime = Date.now();
       
       const check = () => {
         if (this.isConnected || this.qrCode) {
           resolve();
         } else if (Date.now() - startTime > timeout) {
-          reject(new Error('Connection timeout'));
+          // Resolve on timeout to prevent throwing and crashing the process
+          resolve();
         } else {
           setTimeout(check, 1000);
         }
@@ -414,7 +419,14 @@ export class WhatsAppGatewayService implements OnModuleInit, OnModuleDestroy {
   private async reconnect() {
     this.logger.log('Attempting to reconnect...');
     await this.disconnect();
-    setTimeout(() => this.connect(), 5000);
+    setTimeout(async () => {
+      try {
+        await this.connect();
+      } catch (err) {
+        // Never let reconnection errors crash the process
+        this.logger.error('Reconnect failed', err);
+      }
+    }, 5000);
   }
 
   /**
