@@ -4,7 +4,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { WhatsAppGatewayService } from './whatsapp-gateway.service';
 import { PrismaService } from '../prisma/prisma.service';
 
-@Controller('api/whatsapp')
+@Controller('whatsapp')
 export class WhatsAppGatewayController {
   constructor(
     private whatsappGateway: WhatsAppGatewayService,

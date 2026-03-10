@@ -166,7 +166,7 @@ export default function WhatsAppGatewayPage() {
     try {
       const token = localStorage.getItem('auth_token');
       const response = await fetch(
-        `https://kryroschatagentbackend.onrender.com/api/whatsapp/messages/${phoneNumber}`,
+        `${API_URL}/whatsapp/messages/${phoneNumber}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -177,7 +177,7 @@ export default function WhatsAppGatewayPage() {
         
         // Mark as read
         await fetch(
-          `https://kryroschatagentbackend.onrender.com/api/whatsapp/messages/${phoneNumber}/read`,
+          `${API_URL}/whatsapp/messages/${phoneNumber}/read`,
           {
             method: 'POST',
             headers: { Authorization: `Bearer ${token}` },
