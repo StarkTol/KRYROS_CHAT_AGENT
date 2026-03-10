@@ -78,13 +78,15 @@ export class WhatsAppGatewayService implements OnModuleInit, OnModuleDestroy {
 
     try {
       // Dynamic import for Baileys
-      const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = await import('@whiskeysockets/baileys');
+      const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, Browsers } = await import('@whiskeysockets/baileys');
       
       // Use memory auth state for simplicity (can be changed to file-based)
       const authState = await useMultiFileAuthState('./whatsapp-auth');
+      const { version } = await fetchLatestBaileysVersion();
       
       this.socket = makeWASocket({
-        browser: ['KRYROS CHAT AGENT', 'Chrome', '120.0.0'],
+        version,
+        browser: Browsers.appropriate('Desktop'),
         auth: authState.state,
         connectTimeoutMs: 60000,
         keepAliveIntervalMs: 30000,
@@ -105,7 +107,8 @@ export class WhatsAppGatewayService implements OnModuleInit, OnModuleDestroy {
         }
 
         if (connection === 'close') {
-          const reason = (lastDisconnect?.error as any)?.output?.statusCode;
+          const err: any = lastDisconnect?.error as any;
+          const reason = err?.output?.statusCode || err?.status || err?.code || 'unknown';
           this.logger.warn(`Connection closed: ${reason}`);
           
           if (reason === DisconnectReason.loggedOut) {
